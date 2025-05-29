@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>遠傳KYC拍照示範系統</title>
+  <style>
+    body {
+      font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+      margin: 0; padding: 0; background: #f7f7f7;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh;
+    }
+    header {
+      background: #0046be;
+      color: white;
+      width: 100%;
+      padding: 16px 24px;
+      box-sizing: border-box;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      letter-spacing: 1.2px;
+    }
+    main {
+      max-width: 900px;
+      width: 100%;
+      background: white;
+      margin: 20px 0;
+      padding: 20px;
+      box-sizing: border-box;
+      border-radius: 8px;
+      box-shadow: 0 3px 12px rgb(0 0 0 / 0.15);
+    }
+    h2 {
+      margin-top: 0;
+      color: #0046be;
+      border-bottom: 2px solid #0046be;
+      padding-bottom: 6px;
+    }
+    section#kyc-info {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      color: #333;
+    }
+    ul {
+      margin-left: 1.2em;
+    }
+    .rules-imgs {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .rules-imgs img {
+      width: 120px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+    }
+    .rules-imgs img.correct {
+      border-color: #26a641;
+    }
+    .rules-imgs img.incorrect {
+      border-color: #d42e2e;
+      opacity: 0.7;
+    }
+    #camera-container {
+      position: relative;
+      width: 100%;
+      max-width: 640px;
+      margin: 24px auto 16px auto;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    video {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    #logo-overlay {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 80px;
+      opacity: 0.7;
+      pointer-events: none;
+      user-select: none;
+    }
+    #face-box {
+      position: absolute;
+      border: 3px solid #26a641;
+      border-radius: 8px;
+      pointer-events: none;
+      box-sizing: border-box;
+      display: none;
+    }
+    #btn-takephoto {
+      margin: 12px auto;
+      display: block;
+      background: #0046be;
+      color: white;
+      font-weight: bold;
+      font-size: 1rem;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+    #btn-takephoto:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+    #preview {
+      text-align: center;
+      margin-top: 20px;
+    }
+    #preview img {
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.25);
+    }
+    #btn-download {
+      margin-top: 12px;
+      background: #26a641;
+      border: none;
+      padding: 10px 20px;
+      color: white;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #btn-download:disabled {
+      background: #999;
+      cursor: not-allowed;
+    }
+    footer {
+      margin-top: auto;
+      padding: 12px 24px;
+      font-size: 0.85rem;
+      color: #666;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<header>遠傳KYC拍照說明與拍照系統示範</header>
+
+<main>
+  <section id="kyc-info">
+    <h2>KYC拍照重點說明</h2>
+    <p>依國家通訊傳播委員會（NCC）要求，電信申辦用戶需遵守以下拍照規範：</p>
+    <ul>
+      <li>申請人需出示雙證件正本，並拍照留存證件與本人清晰影像</li>
+      <li>照片需露出品牌LOGO，LOGO不可遮擋</li>
+      <li>不可戴口罩、不可比手勢或遮蔽臉部</li>
+      <li>申辦用戶號碼時，須即時拍照留存申請人或代理人影像</li>
+      <li>若申請人拒絕提供資料或不配合，業者應拒絕辦理</li>
+    </ul>
+    <div class="rules-imgs">
+      <img src="https://i.imgur.com/NQ0dQ8U.png" alt="正確範例" class="correct" title="正確範例：露出品牌LOGO"/>
+      <img src="https://i.imgur.com/HQwPaJo.png" alt="錯誤遮擋LOGO" class="incorrect" title="錯誤範例：遮擋LOGO"/>
+      <img src="https://i.imgur.com/KP8i9Lq.png" alt="錯誤戴口罩" class="incorrect" title="錯誤範例：戴口罩"/>
+    </div>
+  </section>
+
+  <section id="camera-section">
+    <h2>即時拍照系統</h2>
+    <div id="camera-container">
+      <video id="video" autoplay muted playsinline></video>
+      <img id="logo-overlay" src="https://i.imgur.com/gKhUzOx.png" alt="品牌LOGO" />
+      <div id="face-box"></div>
+    </div>
+    <button id="btn-takephoto" disabled>拍照</button>
+
+    <div id="preview" style="display:none;">
+      <h3>拍攝預覽</h3>
+      <img id="photo-preview" alt="拍攝照片預覽" />
+      <br/>
+      <button id="btn-download" disabled>下載照片</button>
+    </div>
+  </section>
+</main>
+
+<footer>
+  遠傳電信 KYC 拍照系統示範 &nbsp;&nbsp;|&nbsp;&nbsp; 2025 © All rights reserved.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.6.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1.4.3/dist/face-api.min.js"></script>
+<script>
+  const video = document.getElementById('video');
+  const faceBox = document.getElementById('face-box');
+  const btnTakePhoto = document.getElementById('btn-takephoto');
+  const preview = document.getElementById('preview');
+  const photoPreview = document.getElementById('photo-preview');
+  const btnDownload = document.getElementById('btn-download');
+
+  let detections = null;
+  let isModelLoaded = false;
+
+  async function setupCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+      video.srcObject = stream;
+      return new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          video.play();
+          resolve();
+        };
+      });
+    } catch (err) {
+      alert('無法存取攝影機，請允許權限');
+      console.error(err);
+    }
+  }
+
+  async function loadModels() {
+    const modelUrl = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+    await faceapi.nets.tinyFaceDetector.loadFromUri(modelUrl);
+    isModelLoaded = true;
+  }
+
+  function drawFaceBox(box) {
+    const { x, y, width, height } = box;
+    faceBox.style.display = 'block';
+    faceBox.style.left = `${x}px`;
+    faceBox.style.top = `${y}px`;
+    faceBox.style.width = `${width}px`;
+    faceBox.style.height = `${height}px`;
+  }
+
+  function clearFaceBox() {
+    faceBox.style.display = 'none';
+  }
+
+  async function detectFace() {
+    if (!isModelLoaded) return;
+    const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 224, scoreThreshold: 0.5 });
+    const result = await faceapi.detectSingleFace(video, options);
+    if (result) {
+      detections = result;
+      drawFaceBox(result.box);
+      btnTakePhoto.disabled = false;
+    } else {
+      detections = null;
+      clearFaceBox();
+      btnTakePhoto.disabled = true;
+    }
+    requestAnimationFrame(detectFace);
+  }
+
+  function takePhoto() {
+    if (!detections) {
+      alert('請確保鏡頭中有偵測到人臉後再拍照');
+      return;
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    photoPreview.src = dataUrl;
+    preview.style.display = 'block';
+    btnDownload.disabled = false;
+  }
+
+  btnTakePhoto.addEventListener('click', takePhoto);
+  btnDownload.addEventListener('click', () => {
+    const a = document.createElement('a');
+    a.href = photoPreview.src;
+    a.download = `KYC_Photo_${new Date().toISOString().slice(0,19).replace(/:/g,"-")}.jpg`;
+    a.click();
+  });
+
+  async function init() {
+    await loadModels();
+    await setupCamera();
+    detectFace();
+  }
+
+  window.onload = init;
+</script>
+
+</body>
+</html>
